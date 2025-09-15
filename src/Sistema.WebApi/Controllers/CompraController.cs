@@ -5,6 +5,7 @@ using Bogus;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Sistema.WebApi.Datos.DBContexAplication;
+using Sistema.WebApi.dtos;
 using Sistema.WebApi.Entities.Compra;
 using Sistema.WebApi.ViewModels;
 
@@ -23,7 +24,7 @@ namespace Sistema.WebApi.Controllers
         }
         // GET: api/Compras
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Ingreso>>> GetCompras()
+        public async Task<ActionResult<IEnumerable<CompraDto>>> GetCompras()
         {
             // Obtener solo las compras (ingresos) sin incluir los detalles
             var compras = await _context.Ingresos
@@ -31,8 +32,32 @@ namespace Sistema.WebApi.Controllers
                 .Include(i => i.Proveedor) // Opcional: Incluir información del proveedor
                 .OrderByDescending(i => i.fecha_hora)
                 .ToListAsync();
+            var comprasDto = compras.Select(c => new CompraDto
+            {
+                idingreso = c.idingreso,
+                idproveedor = c.idproveedor,
+                idusuario = c.idusuario,
+                tipo_comprobante = c.tipo_comprobante,
+                serie_comprobante = c.serie_comprobante,
+                num_comprobante = c.num_comprobante,
+                fecha_hora = c.fecha_hora,
+                estado = c.estado,
+                impuesto = c.impuesto,
+                total = c.total,
 
-            return Ok(compras);
+                Proveedor = new ProveedorDto
+                {
+                    idpersona = c.Proveedor.idpersona,
+                    nombre = c.Proveedor.nombre
+                },
+
+                Usuario = new UserCompraDto
+                {
+                    idusuario = c.Usuario.idusuario,
+                    nombre = c.Usuario.nombre
+                }
+            }).ToList();
+            return Ok(comprasDto);
         }
         // GET: api/Ingreso/5 (Ver detalles de un ingreso)
         [HttpGet("{id}")]
